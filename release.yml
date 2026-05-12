@@ -1,0 +1,54 @@
+name: Release & Deploy Back-End
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  deploy:
+    name: Deploy to Render
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Extrair versão da tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Validar formato SemVer
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag inválida: $VERSION — deve seguir o padrão vX.Y.Z"
+            exit 1
+          fi
+          echo "Tag válida: $VERSION"
+
+      - name: Trigger deploy no Render
+        run: |
+          curl -s -X POST \
+            "https://api.render.com/v1/services/${{ secrets.SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache": false}' \
+            --fail
+          echo "Deploy enviado ao Render com sucesso!"
+
+      - name: Criar Release no GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: "Release ${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## 🚀 Deploy Back-End — ${{ steps.version.outputs.VERSION }}
+
+            - ✅ Deploy acionado automaticamente no Render
+            - 🔖 Tag: `${{ steps.version.outputs.VERSION }}`
+            - 📅 Data: ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

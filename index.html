@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-Do App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f0e17;
+      --surface: #1a1829;
+      --card: #211f35;
+      --border: #2e2b4a;
+      --accent: #e8c547;
+      --accent2: #7c6af7;
+      --text: #fffffe;
+      --muted: #9491b4;
+      --danger: #ff6b6b;
+      --done: #3ddc84;
+      --radius: 12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px 80px;
+    }
+
+    /* Background decoration */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 800px; height: 800px;
+      background: radial-gradient(ellipse, rgba(124,106,247,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    /* Header */
+    header {
+      margin-bottom: 40px;
+    }
+
+    .tag {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      background: rgba(232,197,71,0.1);
+      border: 1px solid rgba(232,197,71,0.25);
+      border-radius: 20px;
+      padding: 4px 12px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 6vw, 3rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    h1 span {
+      color: var(--accent2);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 8px;
+      font-weight: 400;
+    }
+
+    /* Stats bar */
+    .stats {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stat strong {
+      color: var(--text);
+      font-size: 16px;
+      display: block;
+      line-height: 1.2;
+    }
+
+    /* Form */
+    .form-area {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 24px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .form-area input {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-area input::placeholder { color: var(--muted); }
+    .form-area input:focus { border-color: var(--accent2); }
+
+    .btn-add {
+      background: var(--accent);
+      color: #0f0e17;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn-add:hover { opacity: 0.88; }
+    .btn-add:active { transform: scale(0.97); }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--muted);
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--accent2);
+      border-color: var(--accent2);
+      color: #fff;
+    }
+
+    /* Task list */
+    #task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .task-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      animation: slideIn 0.25s ease;
+      transition: border-color 0.2s, opacity 0.3s;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .task-item.done {
+      border-color: rgba(61,220,132,0.2);
+      opacity: 0.65;
+    }
+
+    /* Checkbox */
+    .check {
+      width: 22px; height: 22px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      background: transparent;
+    }
+
+    .task-item.done .check {
+      background: var(--done);
+      border-color: var(--done);
+    }
+
+    .check::after {
+      content: '✓';
+      font-size: 13px;
+      color: #0f0e17;
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .task-item.done .check::after { opacity: 1; }
+
+    /* Task title */
+    .task-title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 600;
+      transition: all 0.2s;
+      word-break: break-word;
+    }
+
+    .task-item.done .task-title {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .task-date {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* Delete button */
+    .btn-del {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px 8px;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+
+    .btn-del:hover {
+      background: rgba(255,107,107,0.1);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 48px 0;
+      color: var(--muted);
+    }
+
+    .empty .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty p { font-size: 14px; }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 32px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 13px;
+      font-family: 'DM Mono', monospace;
+      transition: transform 0.3s ease;
+      z-index: 999;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: var(--done); color: var(--done); }
+    .toast.error   { border-color: var(--danger); color: var(--danger); }
+
+    /* Footer */
+    footer {
+      margin-top: 48px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      text-align: center;
+      letter-spacing: 0.08em;
+    }
+
+    footer span { color: var(--accent2); }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <div class="tag">v1.0.1 · CI/CD Project</div>
+      <h1>To-Do <span>App</span></h1>
+      <p class="subtitle">Gerencie suas tarefas com estilo. Deployado via GitHub Actions.</p>
+      <div class="stats">
+        <div class="stat"><strong id="stat-total">0</strong>total</div>
+        <div class="stat"><strong id="stat-pending">0</strong>pendentes</div>
+        <div class="stat"><strong id="stat-done">0</strong>concluídas</div>
+      </div>
+    </header>
+
+    <div class="form-area">
+      <input type="text" id="new-task" placeholder="Nova tarefa..." maxlength="120" />
+      <button class="btn-add" onclick="addTask()">+ Adicionar</button>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('all', this)">Todas</button>
+      <button class="filter-btn" onclick="setFilter('pending', this)">Pendentes</button>
+      <button class="filter-btn" onclick="setFilter('done', this)">Concluídas</button>
+    </div>
+
+    <div id="task-list"><div class="loading">carregando tarefas...</div></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <footer>
+    Projeto CI/CD · <span>Node.js + Express</span> · Render + Vercel
+  </footer>
+
+  <script>
+    // ⬇️ Troque pela URL do seu back-end no Render
+    const API = 'https://SEU-PROJETO.onrender.com';
+
+    let tasks = [];
+    let filter = 'all';
+
+    async function fetchTasks() {
+      try {
+        const res = await fetch(`${API}/tasks`);
+        tasks = await res.json();
+        render();
+      } catch (e) {
+        document.getElementById('task-list').innerHTML =
+          `<div class="empty"><div class="icon">⚠️</div><p>Não foi possível conectar à API.<br>Verifique a URL do back-end.</p></div>`;
+      }
+    }
+
+    async function addTask() {
+      const input = document.getElementById('new-task');
+      const title = input.value.trim();
+      if (!title) return;
+
+      try {
+        const res = await fetch(`${API}/tasks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title }),
+        });
+        const task = await res.json();
+        tasks.unshift(task);
+        input.value = '';
+        render();
+        toast('Tarefa criada!', 'success');
+      } catch { toast('Erro ao criar tarefa.', 'error'); }
+    }
+
+    async function toggleTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+      try {
+        const res = await fetch(`${API}/tasks/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ completed: !task.completed }),
+        });
+        const updated = await res.json();
+        Object.assign(task, updated);
+        render();
+      } catch { toast('Erro ao atualizar.', 'error'); }
+    }
+
+    async function deleteTask(id) {
+      try {
+        await fetch(`${API}/tasks/${id}`, { method: 'DELETE' });
+        tasks = tasks.filter(t => t.id !== id);
+        render();
+        toast('Tarefa removida.', 'success');
+      } catch { toast('Erro ao remover.', 'error'); }
+    }
+
+    function setFilter(f, btn) {
+      filter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    }
+
+    function render() {
+      const total   = tasks.length;
+      const done    = tasks.filter(t => t.completed).length;
+      const pending = total - done;
+
+      document.getElementById('stat-total').textContent   = total;
+      document.getElementById('stat-pending').textContent = pending;
+      document.getElementById('stat-done').textContent   = done;
+
+      const filtered = tasks.filter(t =>
+        filter === 'all' ? true :
+        filter === 'done' ? t.completed : !t.completed
+      );
+
+      const list = document.getElementById('task-list');
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="empty"><div class="icon">✨</div><p>Nenhuma tarefa aqui.</p></div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(t => `
+        <div class="task-item ${t.completed ? 'done' : ''}">
+          <div class="check" onclick="toggleTask(${t.id})"></div>
+          <span class="task-title">${escHtml(t.title)}</span>
+          <span class="task-date">${fmtDate(t.createdAt)}</span>
+          <button class="btn-del" onclick="deleteTask(${t.id})" title="Remover">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'short' });
+    }
+
+    let toastTimer;
+    function toast(msg, type = '') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = `toast ${type} show`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    // Enter para adicionar
+    document.getElementById('new-task').addEventListener('keydown', e => {
+      if (e.key === 'Enter') addTask();
+    });
+
+    fetchTasks();
+  </script>
+</body>
+</html>
